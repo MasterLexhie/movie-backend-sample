@@ -19,7 +19,7 @@ app.get("/", (_, res) => {
 /** Fetching the movie */
 app.post("/getmovie", (req, res) => {
   const movieToSearch = req.body?.queryResult?.parameters?.movie
-  ? req.body.result.parameters.movie
+  ? req.body.queryResult.parameters.movie
   : "";
   // const movieToSearch =
   //   req.body.queryResult &&
