@@ -20,7 +20,7 @@ app.listen(port, () => {
 
 /** Fetching the movie */
 app.post("/getmovie", (req, res) => {
-  const movieToSearch = req.body.queryResult && req.body.queryResult.parameters && req.body.queryResult.parameters.movie
+  const movieToSearch = req.body.result && req.body.result.parameters && req.body.result.parameters.movie
     ? req.body.result?.parameters?.movie
     : "";
 
