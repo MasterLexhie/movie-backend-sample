@@ -20,8 +20,12 @@ app.listen(port, () => {
 
 /** Fetching the movie */
 app.post("/getmovie", (req, res) => {
-  const {queryResult} = req.body
-  const movieToSearch = queryResult?.parameters?.movie
+  const movieToSearch =
+    req.body.queryResult &&
+    req.body.queryResult.parameters &&
+    req.body.queryResult.parameters.movie
+      ? req.body.result.parameters.movie
+      : "";
 
   const api = encodeURI(
     `${process.env.BASE_URL}/?t=${movieToSearch}&apiKey=${process.env.API_KEY}`
