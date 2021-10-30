@@ -20,12 +20,8 @@ app.listen(port, () => {
 
 /** Fetching the movie */
 app.post("/getmovie", (req, res) => {
-  const movieToSearch =
-    req.body.queryResult &&
-    req.body.queryResult.parameters &&
-    req.body.queryResult.parameters.movie
-      ? req.body.result.parameters.movie
-      : "";
+  const {queryResult} = req.body
+  const movieToSearch = queryResult?.parameters?.movie
 
   const api = encodeURI(
     `${process.env.BASE_URL}/?t=${movieToSearch}&apiKey=${process.env.API_KEY}`
@@ -42,11 +38,11 @@ app.post("/getmovie", (req, res) => {
         const movie = JSON.parse(completeResponse);
 
         let dataToSend = movieToSearch;
-        dataToSend = `${movie.Title} was released in the year ${movie.Year}. It is directed by ${movie.Director} and stars ${movie.Actors}. Here some glimpse of the plot: ${movie.Plot}.}`;
+        dataToSend = `${movie.Title} was released in the year ${movie.Year}. It is directed by ${movie.Director} and stars ${movie.Actors}. Here some glimpse of the plot: ${movie.Plot}.`;
 
         return res.json({
           fulfillmentText: dataToSend,
-          data: movie,
+          data: req.body,
           source: "getmovie",
         });
       });
