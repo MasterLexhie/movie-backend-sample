@@ -19,11 +19,11 @@ app.get("/", (_, res) => {
 /** Fetching the movie */
 app.post("/getmovie", (req, res) => {
   const movieToSearch =
-    req.body.result &&
-    req.body.result.parameters &&
-    req.body.result.parameters.movie
+    req.body.queryResult &&
+    req.body.queryResult.parameters &&
+    req.body.queryResult.parameters.movie
       ? req.body.result.parameters.movie
-      : "Unknown";
+      : "";
 
   const api = encodeURI(
     `${process.env.BASE_URL}/?t=${movieToSearch}&apiKey=${process.env.API_KEY}`
@@ -43,11 +43,8 @@ app.post("/getmovie", (req, res) => {
         dataToSend = `${movie.Title} was released in the year ${movie.Year}. It is directed by ${movie.Director} and stars ${movie.Actors}. Here some glimpse of the plot: ${movie.Plot}.`;
 
         return res.json({
-          // fulfillmentText: dataToSend,
-          // source: "getmovie",
-          speech: dataToSend,
-          displayText: dataToSend,
-          source: "team info",
+          fulfillmentText: dataToSend,
+          source: "getmovie",
         });
       });
     },
