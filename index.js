@@ -18,12 +18,14 @@ app.get("/", (_, res) => {
 
 /** Fetching the movie */
 app.post("/getmovie", (req, res) => {
-  const movieToSearch =
-    req.body.queryResult &&
-    req.body.queryResult.parameters &&
-    req.body.queryResult.parameters.movie
-      ? req.body.result.parameters.movie
-      : "";
+  const movieToSearch = req.body?.queryResult?.parameters?.movie
+  ? req.body.result.parameters.movie
+  : "";
+  // const movieToSearch =
+  //   req.body.queryResult &&
+  //   req.body.queryResult.parameters &&
+  //   req.body.queryResult.parameters.movie
+
 
   const api = encodeURI(
     `${process.env.BASE_URL}/?t=${movieToSearch}&apiKey=${process.env.API_KEY}`
