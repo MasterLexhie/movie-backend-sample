@@ -43,8 +43,11 @@ app.post("/getmovie", (req, res) => {
         dataToSend = `${movie.Title} was released in the year ${movie.Year}. It is directed by ${movie.Director} and stars ${movie.Actors}. Here some glimpse of the plot: ${movie.Plot}.`;
 
         return res.json({
-          fulfillmentText: dataToSend,
-          source: "getmovie",
+          // fulfillmentText: dataToSend,
+          // source: "getmovie",
+          speech: dataToSend,
+          displayText: dataToSend,
+          source: "team info",
         });
       });
     },
