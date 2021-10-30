@@ -42,7 +42,6 @@ app.post("/getmovie", (req, res) => {
 
         return res.json({
           fulfillmentText: dataToSend,
-          data: req.body,
           source: "getmovie",
         });
       });
