@@ -1,6 +1,7 @@
 const express = require("express");
-const http = require("http");
 require("dotenv").config();
+const http = require("http");
+const superagent = require("superagent");
 
 const app = express();
 const port = process.env.PORT || 4000;
@@ -16,16 +17,19 @@ app.get("/", (_, res) => {
   res.status(200).send("Server is working.");
 });
 
+// Get a recipe for a meal - done
+// Get meals by categories - done
+// Get meals by area - done
+// Get random meal/recipe. - done
+// Get the list of categories of meals - done
+// Get the list of countries of meals - done
+// Get the list of ingrdients of meals - done
+
 /** Fetching the movie */
 app.post("/getmovie", (req, res) => {
   const movieToSearch = req.body?.queryResult?.parameters?.movie
-  ? req.body.queryResult.parameters.movie
-  : "";
-  // const movieToSearch =
-  //   req.body.queryResult &&
-  //   req.body.queryResult.parameters &&
-  //   req.body.queryResult.parameters.movie
-
+    ? req.body.queryResult.parameters.movie
+    : "";
 
   const api = encodeURI(
     `${process.env.BASE_URL}/?t=${movieToSearch}&apiKey=${process.env.API_KEY}`
@@ -37,6 +41,7 @@ app.post("/getmovie", (req, res) => {
       let completeResponse = "";
       responseFromAPI.on("data", (chunk) => {
         completeResponse += chunk;
+        console.log({ chunk });
       });
       responseFromAPI.on("end", () => {
         const movie = JSON.parse(completeResponse);
@@ -58,4 +63,127 @@ app.post("/getmovie", (req, res) => {
       });
     }
   );
+});
+
+/** Get a recipe for a meal */
+app.post("/get-recipe", (request, response) => {
+  const mealToSearch = request.body?.queryResult?.parameters?.recipe;
+  const api = encodeURI(
+    `${process.env.BASE_RECIPE_URL}/search.php?s=${mealToSearch}`
+  );
+
+  superagent
+    .post(api)
+    .then((apiRes) => {
+      let dataToSend = apiRes.body;
+      return response.json({
+        message: "Went through!!",
+        data: dataToSend,
+      });
+    })
+    .catch((error) => console.error(error));
+});
+
+/** Get a recipes by categories */
+app.post("/get-recipe-category", (request, response) => {
+  const mealToSearch = request.body?.queryResult?.parameters?.recipeCategory;
+  const api = encodeURI(
+    `${process.env.BASE_RECIPE_URL}/filter.php?c=${mealToSearch}`
+  );
+
+  superagent
+    .post(api)
+    .then((apiRes) => {
+      let dataToSend = apiRes.body;
+      return response.json({
+        message: "Went through!!",
+        data: dataToSend,
+      });
+    })
+    .catch((error) => console.error(error));
+});
+
+/** Get a recipes by area */
+app.post("/get-recipe-area", (request, response) => {
+  const mealToSearch = request.body?.queryResult?.parameters?.recipeArea;
+  const api = encodeURI(
+    `${process.env.BASE_RECIPE_URL}/filter.php?a=${mealToSearch}`
+  );
+
+  superagent
+    .post(api)
+    .then((apiRes) => {
+      let dataToSend = apiRes.body;
+      return response.json({
+        message: "Went through!!",
+        data: dataToSend,
+      });
+    })
+    .catch((error) => console.error(error));
+});
+
+/** Get random meal/recipe */
+app.post("/get-random-recipe", (request, response) => {
+  const random = request.body?.queryResult?.parameters?.randomRecipe;
+
+  const api = encodeURI(`${process.env.BASE_RECIPE_URL}/random.php`);
+
+  const IsRandom = random.toLowerCase() === "random" ? true : false;
+
+  superagent
+    .post(api)
+    .then((apiRes) => {
+      let dataToSend = apiRes.body;
+
+      if (!IsRandom) {
+        response.status(400).json({
+          error: "No random keyword passed",
+        });
+
+        return false;
+      }
+
+      return response.json({
+        message: "Successful",
+        data: dataToSend,
+      });
+    })
+    .catch((error) => response.json({ error: error }));
+});
+
+/** Get meal query options */
+app.post("/get-meal-list", (request, response) => {
+  const keyword = request.body?.queryResult?.parameters?.keyword;
+
+  const keywordData =
+    keyword.toLowerCase() === "category"
+      ? "c"
+      : keyword.toLowerCase() === "country"
+      ? "a"
+      : keyword.toLowerCase() === "ingredients"
+      ? "i"
+      : null;
+
+  if (!keywordData) {
+    response.status(400).json({
+      error: "No valid keyword passed",
+    });
+    return false;
+  }
+
+  const api = encodeURI(
+    `${process.env.BASE_RECIPE_URL}/list.php?${keywordData}=list`
+  );
+
+  superagent
+    .post(api)
+    .then((apiRes) => {
+      let dataToSend = apiRes.body;
+
+      return response.json({
+        message: "Successful",
+        data: dataToSend,
+      });
+    })
+    .catch((error) => response.json({ error: error }));
 });
