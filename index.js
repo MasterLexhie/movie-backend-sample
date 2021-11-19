@@ -114,7 +114,7 @@ app.post("/get-recipe-category", (request, response) => {
       let dataToSend = apiRes.body;
       return response.json({
         message: "Went through!!",
-        data: dataToSend,
+        fulfillmentText: dataToSend,
       });
     })
     .catch((error) => console.error(error));
@@ -133,7 +133,7 @@ app.post("/get-recipe-area", (request, response) => {
       let dataToSend = apiRes.body;
       return response.json({
         message: "Went through!!",
-        data: dataToSend,
+        fulfillmentText: dataToSend,
       });
     })
     .catch((error) => console.error(error));
@@ -150,7 +150,12 @@ app.post("/get-random-recipe", (request, response) => {
   superagent
     .post(api)
     .then((apiRes) => {
-      let dataToSend = apiRes.body;
+      let { meals } = apiRes.body;
+
+      let data, dataToSend;
+
+      data = meals.map((randomMeal) => ( dataToSend = randomMeal));
+
 
       if (!IsRandom) {
         response.status(400).json({
@@ -162,7 +167,13 @@ app.post("/get-random-recipe", (request, response) => {
 
       return response.json({
         message: "Successful",
-        data: dataToSend,
+        fulfillmentText: {
+          name: dataToSend.strMeal,
+          category: dataToSend.strCategory,
+          recipeInstruction: dataToSend.strInstructions,
+          image: dataToSend.strMealThumb,
+          youTubeLink: dataToSend.strYoutube,
+        }
       });
     })
     .catch((error) => response.json({ error: error }));
@@ -199,7 +210,7 @@ app.post("/get-meal-list", (request, response) => {
 
       return response.json({
         message: "Successful",
-        data: dataToSend,
+        fulfillmentText: dataToSend,
       });
     })
     .catch((error) => response.json({ error: error }));
