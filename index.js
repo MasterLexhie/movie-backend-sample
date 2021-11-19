@@ -72,13 +72,30 @@ app.post("/get-recipe", (request, response) => {
     `${process.env.BASE_RECIPE_URL}/search.php?s=${mealToSearch}`
   );
 
+  if (!mealToSearch || mealToSearch === undefined || mealToSearch === "") {
+    response.status(400).json({
+      error: "No recipe name sent",
+    });
+    return false;
+  }
+
   superagent
     .post(api)
     .then((apiRes) => {
-      let dataToSend = apiRes.body;
+      let { meals } = apiRes.body,
+        dataToSend;
+
+      if (Array.isArray(meals)) {
+        dataToSend = meals.map((recipes) => ({
+          name: recipes.strMeal,
+          image: recipes.strMealThumb,
+          youTubeLink: recipes.strYoutube,
+        }));
+      }
+
       return response.json({
-        message: "Went through!!",
-        data: dataToSend,
+        message: "Query successful",
+        fulfillmentText: dataToSend,
       });
     })
     .catch((error) => console.error(error));
