@@ -167,13 +167,7 @@ app.post("/get-random-recipe", (request, response) => {
 
       return response.json({
         message: "Successful",
-        fulfillmentText: {
-          name: dataToSend.strMeal,
-          category: dataToSend.strCategory,
-          recipeInstruction: dataToSend.strInstructions,
-          image: dataToSend.strMealThumb,
-          youTubeLink: dataToSend.strYoutube,
-        }
+        fulfillmentText: dataToSend
       });
     })
     .catch((error) => response.json({ error: error }));
