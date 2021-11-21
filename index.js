@@ -165,10 +165,12 @@ app.post("/get-random-recipe", (request, response) => {
         return false;
       }
 
-      return response.json({
-        message: "Successful",
-        fulfillmentText: dataToSend
-      });
+      return response.send(JSON.stringify({"fulfillmentText": dataToSend}))
+
+      // return response.json({
+      //   message: "Successful",
+      //   fulfillmentText: dataToSend
+      // });
     })
     .catch((error) => response.json({ error: error }));
 });
