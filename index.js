@@ -165,7 +165,7 @@ app.post("/get-random-recipe", (request, response) => {
         return false;
       }
 
-      return response.send({"fulfillmentText": JSON.parse(dataToSend)})
+      return response.send({"fulfillmentText": dataToSend})
 
       // return response.json({
       //   message: "Successful",
