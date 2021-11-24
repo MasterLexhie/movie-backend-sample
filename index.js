@@ -182,8 +182,8 @@ app.post("/get-random-recipe", (request, response) => {
         fulfillmentText: `
         The name of the recipe is ${strMeal}. 
         It falls under the ${strCategory} category and its majorly made in the country ${strArea}.
-        
-        The ingredients to make this meals are ${ingredientsArray.map(item => item.ingredient).filter(item => item !== " " && item)} and the measures are ${ingredientsArray.map(item => item.measure).filter(item => item !== " " && item)} respectively.
+
+        The ingredients to make this meals are ${ingredientsArray.map(item => item.ingredient).filter(item => item !== " " && item)}.
 
         The instruction to make this receipe is as follows: ${strInstructions}`,
       });
