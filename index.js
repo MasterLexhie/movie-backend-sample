@@ -154,8 +154,7 @@ app.post("/get-random-recipe", (request, response) => {
 
       let data, dataToSend;
 
-      data = meals.map((randomMeal) => ( dataToSend = randomMeal));
-
+      data = meals.map((randomMeal) => (dataToSend = randomMeal));
 
       if (!IsRandom) {
         response.status(400).json({
@@ -165,12 +164,24 @@ app.post("/get-random-recipe", (request, response) => {
         return false;
       }
 
-      return response.send({"fulfillmentText": dataToSend})
+      let ingredientsArray = [];
+      const mealArray =  Object.keys(dataToSend);
 
-      // return response.json({
-      //   message: "Successful",
-      //   fulfillmentText: dataToSend
-      // });
+      mealArray.map(key => {
+        key.includes('strIngredient') && dataToSend[key] !== "" ? ingredientsArray.push({ingredient: dataToSend[key]}) : false
+      })
+
+      mealArray.map(key => {
+        key.includes('strMeasure') && dataToSend[key] !== "" ? ingredientsArray = [...ingredientsArray, {measure: dataToSend[key]}] : false
+      })
+
+      const { strMeal, strCategory, strArea, strInstructions } = dataToSend;
+
+      return response.json({
+        message: "Successful",
+        fulfillmentText: `The name of the recipe is ${strMeal}. It falls under the ${strCategory} category and its majorly made in the country ${strArea}. the ingredients to make this meals are ${ingredientsArray.map(item => item.ingredient).filter(item => item !== " " && item)} and the measures are ${ingredientsArray.map(item => item.measure).filter(item => item !== " " && item)} respectively. 
+        The instruction to make this receipe is as follows: ${strInstructions}`,
+      });
     })
     .catch((error) => response.json({ error: error }));
 });
