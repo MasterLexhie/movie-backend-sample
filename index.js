@@ -85,17 +85,42 @@ app.post("/get-recipe", (request, response) => {
       let { meals } = apiRes.body,
         dataToSend;
 
-      if (Array.isArray(meals)) {
-        dataToSend = meals.map((recipes) => ({
-          name: recipes.strMeal,
-          image: recipes.strMealThumb,
-          youTubeLink: recipes.strYoutube,
-        }));
-      }
+      if (!Array.isArray(meals)) return;
+
+      meals.map((recipes) => (dataToSend = recipes));
+
+
+      let ingredientsArray = [];
+      const mealArray = Object.keys(dataToSend);
+
+      mealArray.map((key) => {
+        key.includes("strIngredient") && dataToSend[key] !== ""
+          ? ingredientsArray.push({ ingredient: dataToSend[key] })
+          : false;
+      });
+
+      mealArray.map((key) => {
+        key.includes("strMeasure") && dataToSend[key] !== ""
+          ? (ingredientsArray = [
+              ...ingredientsArray,
+              { measure: dataToSend[key] },
+            ])
+          : false;
+      });
+
+      const { strMeal, strCategory, strArea, strInstructions } = dataToSend;
 
       return response.json({
-        message: "Query successful",
-        fulfillmentText: dataToSend,
+        message: "Query Successful",
+        fulfillmentText: `
+        The name of the recipe is ${strMeal}.
+        It falls under the ${strCategory} category and its majorly made in the country ${strArea}.
+
+        The ingredients to make this meals are ${ingredientsArray
+          .map((item) => item.ingredient)
+          .filter((item) => item !== " " && item)}.
+
+        The instruction to make this receipe is as follows: ${strInstructions}`,
       });
     })
     .catch((error) => console.error(error));
@@ -108,13 +133,30 @@ app.post("/get-recipe-category", (request, response) => {
     `${process.env.BASE_RECIPE_URL}/filter.php?c=${mealToSearch}`
   );
 
+  if (!mealToSearch || mealToSearch === undefined || mealToSearch === "") {
+    response.status(400).json({
+      error: "No category name sent",
+    });
+    return false;
+  }
+
   superagent
     .post(api)
     .then((apiRes) => {
-      let dataToSend = apiRes.body;
+      let { meals } = apiRes.body;
+
+      if (!Array.isArray(meals)) return;
+
+      let ingredientsArray = [];
+
+      meals.forEach(item => ingredientsArray.push(item.strMeal))
+
       return response.json({
         message: "Went through!!",
-        fulfillmentText: dataToSend,
+        fulfillmentText: `
+        Meals under this category include:
+        ${ingredientsArray.join(", ")}
+        `,
       });
     })
     .catch((error) => console.error(error));
@@ -130,10 +172,20 @@ app.post("/get-recipe-area", (request, response) => {
   superagent
     .post(api)
     .then((apiRes) => {
-      let dataToSend = apiRes.body;
+      let { meals } = apiRes.body;
+
+      if (!Array.isArray(meals)) return;
+
+      let ingredientsArray = [];
+
+      meals.forEach(item => ingredientsArray.push(item.strMeal))
+
       return response.json({
         message: "Went through!!",
-        fulfillmentText: dataToSend,
+        fulfillmentText: `
+        Meals found in this country include:
+        ${ingredientsArray.join(", ")}
+        `,
       });
     })
     .catch((error) => console.error(error));
@@ -152,9 +204,9 @@ app.post("/get-random-recipe", (request, response) => {
     .then((apiRes) => {
       let { meals } = apiRes.body;
 
-      let data, dataToSend;
+      let dataToSend;
 
-      data = meals.map((randomMeal) => (dataToSend = randomMeal));
+      meals.map((randomMeal) => (dataToSend = randomMeal));
 
       if (!IsRandom) {
         response.status(400).json({
@@ -165,25 +217,34 @@ app.post("/get-random-recipe", (request, response) => {
       }
 
       let ingredientsArray = [];
-      const mealArray =  Object.keys(dataToSend);
+      const mealArray = Object.keys(dataToSend);
 
-      mealArray.map(key => {
-        key.includes('strIngredient') && dataToSend[key] !== "" ? ingredientsArray.push({ingredient: dataToSend[key]}) : false
-      })
+      mealArray.map((key) => {
+        key.includes("strIngredient") && dataToSend[key] !== ""
+          ? ingredientsArray.push({ ingredient: dataToSend[key] })
+          : false;
+      });
 
-      mealArray.map(key => {
-        key.includes('strMeasure') && dataToSend[key] !== "" ? ingredientsArray = [...ingredientsArray, {measure: dataToSend[key]}] : false
-      })
+      mealArray.map((key) => {
+        key.includes("strMeasure") && dataToSend[key] !== ""
+          ? (ingredientsArray = [
+              ...ingredientsArray,
+              { measure: dataToSend[key] },
+            ])
+          : false;
+      });
 
       const { strMeal, strCategory, strArea, strInstructions } = dataToSend;
 
       return response.json({
         message: "Successful",
         fulfillmentText: `
-        The name of the recipe is ${strMeal}. 
+        The name of the recipe is ${strMeal}.
         It falls under the ${strCategory} category and its majorly made in the country ${strArea}.
 
-        The ingredients to make this meals are ${ingredientsArray.map(item => item.ingredient).filter(item => item !== " " && item)}.
+        The ingredients to make this meals are ${ingredientsArray
+          .map((item) => item.ingredient)
+          .filter((item) => item !== " " && item)}.
 
         The instruction to make this receipe is as follows: ${strInstructions}`,
       });
