@@ -54,14 +54,17 @@ app.get("/", (_, res) => {
 });
 
 // Dialogflow route
-app.post("/dialogflow", async (req, res) => {
+app.post("/dialogflow-response", async (req, res) => {
   let languageCode = req.body.languageCode;
   let queryText = req.body.queryText;
   let sessionId = req.body.sessionId;
 
   let responseData = await detectIntent(languageCode, queryText, sessionId);
 
-  res.send(responseData.response);
+  res.json({
+    message: "Successful",
+    data: responseData.response
+  });
 });
 
 /** Get a recipe for a meal */
