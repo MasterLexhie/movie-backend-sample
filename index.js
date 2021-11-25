@@ -1,68 +1,67 @@
 const express = require("express");
+const dialogflow = require("@google-cloud/dialogflow");
 require("dotenv").config();
-const http = require("http");
 const superagent = require("superagent");
 
 const app = express();
 const port = process.env.PORT || 4000;
 
+const CREDENTIALS = JSON.parse(process.env.CREDENTIALS);
+
+// google dialogflow project-id
+const PROJECTID = CREDENTIALS.project_id;
+
+// Configurations for client
+const CONFIGURATION = {
+  credentials: {
+    private_key: CREDENTIALS["private_key"],
+    client_email: CREDENTIALS["client_email"],
+  },
+};
+
+// Create a new session
+const sessionClient = new dialogflow.SessionsClient(CONFIGURATION);
+
+// Detect Intent method
+const detectIntent = async(languageCode, queryText, sessionId) => {
+  let sessionPath = sessionClient.projectAgentSessionPath(PROJECTID, sessionId);
+
+  // The text query request: What question users will ask
+  let request = {
+    session: sessionPath,
+    queryInput: {
+      text: {
+        text: queryText,
+        languageCode: languageCode,
+      },
+    },
+  };
+
+  const responses = await sessionClient.detectIntent(request);
+  const result = responses[0].queryResult;
+
+  return {
+    response: result.fulfillmentText,
+  };
+};
+
 app.use(express.json());
 app.use(express.urlencoded({ extended: true }));
 
-app.listen(port, () => {
-  console.log(`🌏 Server is running at http://localhost:${port}, GREAT!!!`);
-});
 
 app.get("/", (_, res) => {
   res.status(200).send("Server is working.");
 });
 
-// Get a recipe for a meal - done
-// Get meals by categories - done
-// Get meals by area - done
-// Get random meal/recipe. - done
-// Get the list of categories of meals - done
-// Get the list of countries of meals - done
-// Get the list of ingrdients of meals - done
+// Dialogflow route
+app.post("/dialogflow", async (req, res) => {
+  let languageCode = req.body.languageCode;
+  let queryText = req.body.queryText;
+  let sessionId = req.body.sessionId;
 
-/** Fetching the movie */
-app.post("/getmovie", (req, res) => {
-  const movieToSearch = req.body?.queryResult?.parameters?.movie
-    ? req.body.queryResult.parameters.movie
-    : "";
+  let responseData = await detectIntent(languageCode, queryText, sessionId);
 
-  const api = encodeURI(
-    `${process.env.BASE_URL}/?t=${movieToSearch}&apiKey=${process.env.API_KEY}`
-  );
-
-  http.get(
-    api,
-    (responseFromAPI) => {
-      let completeResponse = "";
-      responseFromAPI.on("data", (chunk) => {
-        completeResponse += chunk;
-        console.log({ chunk });
-      });
-      responseFromAPI.on("end", () => {
-        const movie = JSON.parse(completeResponse);
-
-        let dataToSend = movieToSearch;
-        dataToSend = `${movie.Title} was released in the year ${movie.Year}. It is directed by ${movie.Director} and stars ${movie.Actors}. Here some glimpse of the plot: ${movie.Plot}.`;
-
-        return res.json({
-          fulfillmentText: dataToSend,
-          source: "getmovie",
-        });
-      });
-    },
-    (error) => {
-      return res.json({
-        fulfillmentText: "Could not get results at this time",
-        data: error,
-        source: "getmovie",
-      });
-    }
-  );
+  res.send(responseData.response);
 });
 
 /** Get a recipe for a meal */
@@ -88,7 +87,6 @@ app.post("/get-recipe", (request, response) => {
       if (!Array.isArray(meals)) return;
 
       meals.map((recipes) => (dataToSend = recipes));
-
 
       let ingredientsArray = [];
       const mealArray = Object.keys(dataToSend);
@@ -149,7 +147,7 @@ app.post("/get-recipe-category", (request, response) => {
 
       let ingredientsArray = [];
 
-      meals.forEach(item => ingredientsArray.push(item.strMeal))
+      meals.forEach((item) => ingredientsArray.push(item.strMeal));
 
       return response.json({
         message: "Went through!!",
@@ -178,7 +176,7 @@ app.post("/get-recipe-area", (request, response) => {
 
       let ingredientsArray = [];
 
-      meals.forEach(item => ingredientsArray.push(item.strMeal))
+      meals.forEach((item) => ingredientsArray.push(item.strMeal));
 
       return response.json({
         message: "Went through!!",
@@ -252,7 +250,7 @@ app.post("/get-random-recipe", (request, response) => {
     .catch((error) => response.json({ error: error }));
 });
 
-/** Get meal query options */
+/** Get meal query options - will not be used for now */
 app.post("/get-meal-list", (request, response) => {
   const keyword = request.body?.queryResult?.parameters?.keyword;
 
@@ -288,3 +286,9 @@ app.post("/get-meal-list", (request, response) => {
     })
     .catch((error) => response.json({ error: error }));
 });
+
+app.listen(port, () => {
+  console.log(`🌏 Server is running at http://localhost:${port}, GREAT!!!`);
+});
+
+module.exports = app;
