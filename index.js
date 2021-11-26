@@ -2,6 +2,7 @@ const express = require("express");
 const dialogflow = require("@google-cloud/dialogflow");
 require("dotenv").config();
 const superagent = require("superagent");
+const { response } = require("express");
 
 const app = express();
 const port = process.env.PORT || 4000;
@@ -23,7 +24,7 @@ const CONFIGURATION = {
 const sessionClient = new dialogflow.SessionsClient(CONFIGURATION);
 
 // Detect Intent method
-const detectIntent = async(languageCode, queryText, sessionId) => {
+const detectIntent = async (languageCode, queryText, sessionId) => {
   let sessionPath = sessionClient.projectAgentSessionPath(PROJECTID, sessionId);
 
   // The text query request: What question users will ask
@@ -48,7 +49,6 @@ const detectIntent = async(languageCode, queryText, sessionId) => {
 app.use(express.json());
 app.use(express.urlencoded({ extended: true }));
 
-
 app.get("/", (_, res) => {
   res.status(200).send("Server is working.");
 });
@@ -63,57 +63,57 @@ app.post("/dialogflow-response", async (req, res) => {
 
   res.json({
     message: "Successful",
-    data: responseData.response
+    data: responseData.response,
   });
 });
 
-/** Get a recipe for a meal */
-app.post("/get-recipe", (request, response) => {
-  const mealToSearch = request.body?.queryResult?.parameters?.recipe;
-  const api = encodeURI(
-    `${process.env.BASE_RECIPE_URL}/search.php?s=${mealToSearch}`
-  );
+/* One API to get different depending on the values or parameters passed */
 
-  if (!mealToSearch || mealToSearch === undefined || mealToSearch === "") {
-    response.status(400).json({
-      error: "No recipe name sent",
-    });
-    return false;
-  }
+app.post("/recipes", (request, response) => {
+  const recipeName = request.body?.queryResult?.parameters?.recipe;
+  const recipeCategory = request.body?.queryResult?.parameters?.recipeCategory;
+  const recipeArea = request.body?.queryResult?.parameters?.recipeArea;
+  const randomRecipe = request.body?.queryResult?.parameters?.randomRecipe;
 
-  superagent
-    .post(api)
-    .then((apiRes) => {
-      let { meals } = apiRes.body,
-        dataToSend;
+  /** Get a recipe for a meal */
+  if (recipeName) {
+    const api = encodeURI(
+      `${process.env.BASE_RECIPE_URL}/search.php?s=${recipeName}`
+    );
 
-      if (!Array.isArray(meals)) return;
+    superagent
+      .post(api)
+      .then((apiRes) => {
+        let { meals } = apiRes.body,
+          dataToSend;
 
-      meals.map((recipes) => (dataToSend = recipes));
+        if (!Array.isArray(meals)) return;
 
-      let ingredientsArray = [];
-      const mealArray = Object.keys(dataToSend);
+        meals.map((recipes) => (dataToSend = recipes));
 
-      mealArray.map((key) => {
-        key.includes("strIngredient") && dataToSend[key] !== ""
-          ? ingredientsArray.push({ ingredient: dataToSend[key] })
-          : false;
-      });
+        let ingredientsArray = [];
+        const mealArray = Object.keys(dataToSend);
 
-      mealArray.map((key) => {
-        key.includes("strMeasure") && dataToSend[key] !== ""
-          ? (ingredientsArray = [
-              ...ingredientsArray,
-              { measure: dataToSend[key] },
-            ])
-          : false;
-      });
+        mealArray.map((key) => {
+          key.includes("strIngredient") && dataToSend[key] !== ""
+            ? ingredientsArray.push({ ingredient: dataToSend[key] })
+            : false;
+        });
 
-      const { strMeal, strCategory, strArea, strInstructions } = dataToSend;
+        mealArray.map((key) => {
+          key.includes("strMeasure") && dataToSend[key] !== ""
+            ? (ingredientsArray = [
+                ...ingredientsArray,
+                { measure: dataToSend[key] },
+              ])
+            : false;
+        });
 
-      return response.json({
-        message: "Query Successful",
-        fulfillmentText: `
+        const { strMeal, strCategory, strArea, strInstructions } = dataToSend;
+
+        return response.json({
+          message: "Query Successful",
+          fulfillmentText: `
         The name of the recipe is ${strMeal}.
         It falls under the ${strCategory} category and its majorly made in the country ${strArea}.
 
@@ -122,124 +122,105 @@ app.post("/get-recipe", (request, response) => {
           .filter((item) => item !== " " && item)}.
 
         The instruction to make this receipe is as follows: ${strInstructions}`,
-      });
-    })
-    .catch((error) => console.error(error));
-});
-
-/** Get a recipes by categories */
-app.post("/get-recipe-category", (request, response) => {
-  const mealToSearch = request.body?.queryResult?.parameters?.recipeCategory;
-  const api = encodeURI(
-    `${process.env.BASE_RECIPE_URL}/filter.php?c=${mealToSearch}`
-  );
-
-  if (!mealToSearch || mealToSearch === undefined || mealToSearch === "") {
-    response.status(400).json({
-      error: "No category name sent",
-    });
-    return false;
+        });
+      })
+      .catch((error) => response.json({ error: error }));
   }
 
-  superagent
-    .post(api)
-    .then((apiRes) => {
-      let { meals } = apiRes.body;
+  /** Get a recipes by categories */
+  if (recipeCategory) {
+    const api = encodeURI(
+      `${process.env.BASE_RECIPE_URL}/filter.php?c=${recipeCategory}`
+    );
 
-      if (!Array.isArray(meals)) return;
+    superagent
+      .post(api)
+      .then((apiRes) => {
+        let { meals } = apiRes.body;
 
-      let ingredientsArray = [];
+        if (!Array.isArray(meals)) return;
 
-      meals.forEach((item) => ingredientsArray.push(item.strMeal));
+        let ingredientsArray = [];
 
-      return response.json({
-        message: "Went through!!",
-        fulfillmentText: `
+        meals.forEach((item) => ingredientsArray.push(item.strMeal));
+
+        return response.json({
+          message: "Went through!!",
+          fulfillmentText: `
         Meals under this category include:
         ${ingredientsArray.join(", ")}
         `,
-      });
-    })
-    .catch((error) => console.error(error));
-});
+        });
+      })
+      .catch((error) => response.json({ error: error }));
+  }
 
-/** Get a recipes by area */
-app.post("/get-recipe-area", (request, response) => {
-  const mealToSearch = request.body?.queryResult?.parameters?.recipeArea;
-  const api = encodeURI(
-    `${process.env.BASE_RECIPE_URL}/filter.php?a=${mealToSearch}`
-  );
+  /** Get a recipes by area or country */
+  if (recipeArea) {
+    const api = encodeURI(
+      `${process.env.BASE_RECIPE_URL}/filter.php?a=${recipeArea}`
+    );
 
-  superagent
-    .post(api)
-    .then((apiRes) => {
-      let { meals } = apiRes.body;
+    superagent
+      .post(api)
+      .then((apiRes) => {
+        let { meals } = apiRes.body;
 
-      if (!Array.isArray(meals)) return;
+        if (!Array.isArray(meals)) return;
 
-      let ingredientsArray = [];
+        let ingredientsArray = [];
 
-      meals.forEach((item) => ingredientsArray.push(item.strMeal));
+        meals.forEach((item) => ingredientsArray.push(item.strMeal));
 
-      return response.json({
-        message: "Went through!!",
-        fulfillmentText: `
-        Meals found in this country include:
-        ${ingredientsArray.join(", ")}
-        `,
-      });
-    })
-    .catch((error) => console.error(error));
-});
+        return response.json({
+          message: "Went through!!",
+          fulfillmentText: `
+          Meals found in this country include:
+          ${ingredientsArray.join(", ")}
+          `,
+        });
+      })
+      .catch((error) => response.json({ error: error }));
+  }
 
-/** Get random meal/recipe */
-app.post("/get-random-recipe", (request, response) => {
-  const random = request.body?.queryResult?.parameters?.randomRecipe;
+  /** Get a random recipe */
+  if (randomRecipe) {
+    const api = encodeURI(`${process.env.BASE_RECIPE_URL}/random.php`);
 
-  const api = encodeURI(`${process.env.BASE_RECIPE_URL}/random.php`);
+    const IsRandom = randomRecipe.toLowerCase() === "random" ? true : false;
 
-  const IsRandom = random.toLowerCase() === "random" ? true : false;
+    superagent
+      .post(api)
+      .then((apiRes) => {
+        let { meals } = apiRes.body;
 
-  superagent
-    .post(api)
-    .then((apiRes) => {
-      let { meals } = apiRes.body;
+        let dataToSend;
 
-      let dataToSend;
+        meals.map((randomMeal) => (dataToSend = randomMeal));
 
-      meals.map((randomMeal) => (dataToSend = randomMeal));
+        let ingredientsArray = [];
+        const mealArray = Object.keys(dataToSend);
 
-      if (!IsRandom) {
-        response.status(400).json({
-          error: "No random keyword passed",
+        mealArray.map((key) => {
+          key.includes("strIngredient") && dataToSend[key] !== ""
+            ? ingredientsArray.push({ ingredient: dataToSend[key] })
+            : false;
         });
 
-        return false;
-      }
+        mealArray.map((key) => {
+          key.includes("strMeasure") && dataToSend[key] !== ""
+            ? (ingredientsArray = [
+                ...ingredientsArray,
+                { measure: dataToSend[key] },
+              ])
+            : false;
+        });
 
-      let ingredientsArray = [];
-      const mealArray = Object.keys(dataToSend);
+        const { strMeal, strCategory, strArea, strInstructions } = dataToSend;
 
-      mealArray.map((key) => {
-        key.includes("strIngredient") && dataToSend[key] !== ""
-          ? ingredientsArray.push({ ingredient: dataToSend[key] })
-          : false;
-      });
-
-      mealArray.map((key) => {
-        key.includes("strMeasure") && dataToSend[key] !== ""
-          ? (ingredientsArray = [
-              ...ingredientsArray,
-              { measure: dataToSend[key] },
-            ])
-          : false;
-      });
-
-      const { strMeal, strCategory, strArea, strInstructions } = dataToSend;
-
-      return response.json({
-        message: "Successful",
-        fulfillmentText: `
+        return response.json({
+          message: "Successful",
+          fulfillmentText: `
         The name of the recipe is ${strMeal}.
         It falls under the ${strCategory} category and its majorly made in the country ${strArea}.
 
@@ -248,9 +229,10 @@ app.post("/get-random-recipe", (request, response) => {
           .filter((item) => item !== " " && item)}.
 
         The instruction to make this receipe is as follows: ${strInstructions}`,
-      });
-    })
-    .catch((error) => response.json({ error: error }));
+        });
+      })
+      .catch((error) => response.json({ error: error }));
+  }
 });
 
 /** Get meal query options - will not be used for now */
