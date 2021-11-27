@@ -2,7 +2,6 @@ const express = require("express");
 const dialogflow = require("@google-cloud/dialogflow");
 require("dotenv").config();
 const superagent = require("superagent");
-const { response } = require("express");
 
 const app = express();
 const port = process.env.PORT || 4000;
@@ -55,6 +54,7 @@ app.get("/", (_, res) => {
 
 // Dialogflow route
 app.post("/dialogflow-response", async (req, res) => {
+  res.header("Access-Control-Allow-Origin", "*");
   let languageCode = req.body.languageCode;
   let queryText = req.body.queryText;
   let sessionId = req.body.sessionId;
