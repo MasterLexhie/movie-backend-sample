@@ -46,21 +46,16 @@ const detectIntent = async (languageCode, queryText, sessionId) => {
   };
 };
 
-const corsOptions = {
-  origin: true,
-  optionsSuccessStatus: 200, // some legacy browsers (IE11, various SmartTVs) choke on 204
-};
-
 app.use(express.json());
 app.use(express.urlencoded({ extended: true }));
-// app.use(cors(corsOptions));
+app.use(cors());
 
 app.get("/", (_, res) => {
   res.status(200).send("Server is working.");
 });
 
 // Dialogflow route
-app.post("/dialogflow-response", cors(corsOptions), async (req, res) => {
+app.post("/dialogflow-response", async (req, res) => {
   let languageCode = req.body.languageCode;
   let queryText = req.body.queryText;
   let sessionId = req.body.sessionId;
