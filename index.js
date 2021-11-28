@@ -1,5 +1,6 @@
 const express = require("express");
 const dialogflow = require("@google-cloud/dialogflow");
+const cors = require("cors")({ origin: "*" });
 require("dotenv").config();
 const superagent = require("superagent");
 
@@ -54,7 +55,6 @@ app.get("/", (_, res) => {
 
 // Dialogflow route
 app.post("/dialogflow-response", async (req, res) => {
-  res.header("Access-Control-Allow-Origin", "*");
   let languageCode = req.body.languageCode;
   let queryText = req.body.queryText;
   let sessionId = req.body.sessionId;
