@@ -46,20 +46,21 @@ const detectIntent = async (languageCode, queryText, sessionId) => {
   };
 };
 
+const corsOptions = {
+  origin: ["http://localhost:3000", "https://movie-sample-app.herokuapp.com"],
+  optionsSuccessStatus: 200, // some legacy browsers (IE11, various SmartTVs) choke on 204
+};
+
 app.use(express.json());
 app.use(express.urlencoded({ extended: true }));
-app.use(
-  cors({
-    origin: "*",
-  })
-);
+// app.use(cors(corsOptions));
 
 app.get("/", (_, res) => {
   res.status(200).send("Server is working.");
 });
 
 // Dialogflow route
-app.post("/dialogflow-response", async (req, res) => {
+app.post("/dialogflow-response", cors(corsOptions), async (req, res) => {
   let languageCode = req.body.languageCode;
   let queryText = req.body.queryText;
   let sessionId = req.body.sessionId;
