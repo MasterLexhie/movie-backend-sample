@@ -1,6 +1,6 @@
 const express = require("express");
 const dialogflow = require("@google-cloud/dialogflow");
-const cors = require("cors")({ origin: "*" });
+const cors = require("cors");
 require("dotenv").config();
 const superagent = require("superagent");
 
@@ -48,6 +48,11 @@ const detectIntent = async (languageCode, queryText, sessionId) => {
 
 app.use(express.json());
 app.use(express.urlencoded({ extended: true }));
+app.use(
+  cors({
+    origin: "*",
+  })
+);
 
 app.get("/", (_, res) => {
   res.status(200).send("Server is working.");
