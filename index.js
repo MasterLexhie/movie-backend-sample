@@ -47,7 +47,7 @@ const detectIntent = async (languageCode, queryText, sessionId) => {
 };
 
 const corsOptions = {
-  origin: ["http://localhost:3000", "https://movie-sample-app.herokuapp.com"],
+  origin: true,
   optionsSuccessStatus: 200, // some legacy browsers (IE11, various SmartTVs) choke on 204
 };
 
